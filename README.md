@@ -15,7 +15,7 @@ This Python module helps you automate the selection of the best preprocessing pi
 1. **Git Clone:** Clone this repository into your working directory:
 
    ```bash
-   git clone https://github.com/your-username/your-repository.git
+   git clone https://github.com/Kalmy8/auto_preprocessing
    ```
 
 2. **Requirements:** Make sure you have the required libraries installed:
@@ -24,13 +24,25 @@ This Python module helps you automate the selection of the best preprocessing pi
    pip install -r requirements.txt
    ```
 
-## Usage
+Alternatively:
 
+1. **Install as package using pip:**
+   ```bash
+   pip install prepCV
+   ```
+   
+2. **Import dependencies:**
+
+   ```python
+   from prepCV import PipelineDescription, PipelineManager
+   # This classes usage cases are provided below
+   ```
+## Usage
 1. **Define Pipelines:** Create `PipelineDescription` objects to define your preprocessing pipelines.
 
    ```python
    import cv2
-   from preprocessor_module import PipelineDescription, PipelineManager
+   from .auto_preprocessing.prepCV import PipelineDescription, PipelineManager
 
    pipeline1 = PipelineDescription({
        cv2.cvtColor: {'code': [cv2.COLOR_BGR2GRAY]},
