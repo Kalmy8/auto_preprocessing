@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import product
 from typing import Any, Callable, Optional, Type
-
+import joblib
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
@@ -16,14 +16,14 @@ from .utils import get_cv2_function_params, parameter_combinations
 
 class Preprocessor:
     """
-    Is constructed from the resolved PipelineDescription and executes all preprocessing steps
-    in the same order as inside the dictionary.
+    Constructed from the resolved PipelineDescription and executes all preprocessing steps
+    in the same order as they go in the dictionary.
 
-    Resolved PipelineDescription contain only SINGLE value for each parameter used in a function:
+    Resolved PipelineDescription contain only one SINGLE value for each parameter used in a function:
     description = {cv2.adaptiveThreshold: {'maxValue': 255,
                                            'adaptiveMethod' : cv2.ADAPTIVE_THRESH_GAUSSIAN},
-               cv2.dilate : {'kernel': np.ones((3,3))}
-              }
+                   cv2.dilate : {'kernel': np.ones((3,3))}
+                   }
     """
 
     def __init__(self, description: PipelineDescription):
@@ -79,6 +79,12 @@ class PipelineDescription:
 
 
 class OcrEngine(ABC):
+    '''
+    OcrEngine responsible for Box Detection and Drawing. Can be involved in a competition process
+    so user would prefer an image relying on Ocr Detection result.
+    To achieve so, the OcrEngine should return a modified numpy image from the "process" method, containing drawn
+    bounding boxes.
+    '''
     @abstractmethod
     def process(self, np_image: np.ndarray) -> np.ndarray:
         pass
@@ -86,9 +92,9 @@ class OcrEngine(ABC):
 
 class PipelineManager:
     """
-    A singletone object which stores all the user-defined pipelines,
-    launches competition between them using parameter GridSearch and visualuzation (via Search class),
-    cache the competition results and constructs the actual working preprocessors from their descriptions.
+    A singleton object which stores all user-defined pipelines,
+    launches competition between them using parameter GridSearch,
+    caches the competition results and constructs working preprocessors from their descriptions.
     """
 
     pipelines: list[Preprocessor] = []
