@@ -3,15 +3,17 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import product
-from typing import Any, Callable, Optional, Type
-import joblib
+from types import BuiltinFunctionType, BuiltinMethodType
+from typing import Any, Callable, Optional
+
 import cv2
+import dill
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches
 
-from .utils import get_cv2_function_params, parameter_combinations
+from utils import get_cv2_function_params, parameter_combinations
 
 
 class Preprocessor:
@@ -35,8 +37,45 @@ class Preprocessor:
             image = function(image, **params)
         return image
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Preprocessor):
+            return False
+        return self.description == other.description
+
+    def __hash__(self) -> int:
+        return self.description.__hash__()
+
     def __str__(self) -> str:
         return f"Preprocessor containing {self.description.__repr__()}"
+
+
+class PreprocessorFactory:
+    """
+    Factory class responsible for creating Preprocessor objects
+    from PipelineDescription objects.
+    """
+
+    @staticmethod
+    def create_from_description(pipeline_description: PipelineDescription) -> set[Preprocessor]:
+        """
+        Generates a list of Preprocessor objects from a PipelineDescription.
+        """
+        resolved_pipelines = set()
+        function_param_combinations = []
+
+        for function, parameter_dict in pipeline_description.description.items():
+            param_combinations_for_function = [
+                {function: combination} for combination in parameter_combinations(parameter_dict)
+            ]
+            function_param_combinations.append(param_combinations_for_function)
+
+        for pipeline_combination in product(*function_param_combinations):
+            resolved_pipeline = {}
+            for function_params in pipeline_combination:
+                resolved_pipeline.update(function_params)
+            resolved_pipelines.add(Preprocessor(PipelineDescription(resolved_pipeline)))
+
+        return resolved_pipelines
 
 
 @dataclass(frozen=True)
@@ -55,6 +94,32 @@ class PipelineDescription:
     """
 
     description: dict[Callable[..., Any], dict[str, list[Any] | Any]]
+
+    def __eq__(self, other: object) -> bool:
+        """Custom equality comparison for PipelineDescription."""
+        if not isinstance(other, PipelineDescription):
+            return False
+        return self._get_hashable_representation() == other._get_hashable_representation()
+
+    def __hash__(self) -> int:
+        """Custom hash function for PipelineDescription."""
+        return hash(self._get_hashable_representation())
+
+    def _get_hashable_representation(self) -> tuple:
+        """Returns a hashable tuple representation of the description."""
+        hashable_description = []
+        for func, params in self.description.items():
+            if isinstance(func, (BuiltinFunctionType, BuiltinMethodType)):
+                # Use qualified name for built-in functions
+                func_representation = func.__qualname__
+            else:
+                # Use co_code directly for comparison
+                func_representation = func.__code__.co_code
+
+            params_representations = str(params)
+            hashable_description.append((func_representation, params_representations))
+
+        return tuple(hashable_description)
 
     def __post_init__(self):
         self._validate()
@@ -79,12 +144,13 @@ class PipelineDescription:
 
 
 class OcrEngine(ABC):
-    '''
+    """
     OcrEngine responsible for Box Detection and Drawing. Can be involved in a competition process
     so user would prefer an image relying on Ocr Detection result.
     To achieve so, the OcrEngine should return a modified numpy image from the "process" method, containing drawn
     bounding boxes.
-    '''
+    """
+
     @abstractmethod
     def process(self, np_image: np.ndarray) -> np.ndarray:
         pass
@@ -98,56 +164,82 @@ class PipelineManager:
     """
 
     pipelines: list[Preprocessor] = []
-    best_preprocessor = None
+    best_preprocessor: Optional[Preprocessor] = None
     newly_added: list[Preprocessor] = []
+    _instance = None
+    CACHE_FILE = "_prepCV_cache.pkl"
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)  # Create the instance first
+            cls._load_from_cache()  # Load cached data if available
+        return cls._instance
 
     @classmethod
-    def _resolve_complex_descriptions(
-        cls, pipeline_description: PipelineDescription
-    ) -> list[PipelineDescription]:
-        """
-        Generates PipelineDescriptions for each possible parameter combination.
-        """
-        resolved_pipelines = []
-        function_param_combinations = []
+    def _load_from_cache(cls):
+        """Load the PipelineManager from the cache."""
+        try:
+            with open(cls.CACHE_FILE, "rb") as f:
+                cache_dict = dill.load(f)
 
-        for function, parameter_dict in pipeline_description.description.items():
-            param_combinations_for_function = [
-                {function: combination} for combination in parameter_combinations(parameter_dict)
-            ]
-            function_param_combinations.append(param_combinations_for_function)
+            # Retrieve seen preprocessors from the cache
+            for prep_description in cache_dict["preprocessors_descriptions"]:
+                prep = PreprocessorFactory.create_from_description(prep_description)
+                cls.pipelines.extend(prep)
 
-        for pipeline_combination in product(*function_param_combinations):
-            resolved_pipeline = {}
-            for function_params in pipeline_combination:
-                resolved_pipeline.update(function_params)
-            resolved_pipelines.append(PipelineDescription(resolved_pipeline))
+            # Retrieve best preprocessor
+            best_prep_descr = cache_dict["best_preprocessor_description"]
+            best_prep = PreprocessorFactory.create_from_description(best_prep_descr).pop()
+            cls.best_preprocessor = best_prep
 
-        return resolved_pipelines
+            print("Loaded PipelineManager from cache.")
+
+        except FileNotFoundError:
+            pass  # No cache file, a new instance will be constructed
+
+    @classmethod
+    def _save_to_cache(cls):
+        cache_dict = {}
+        cache_dict["preprocessors_descriptions"] = [
+            preprocessors.description for preprocessors in cls.pipelines
+        ]
+        cache_dict["best_preprocessor_description"] = cls.best_preprocessor.description
+
+        """Save the PipelineManager to the cache."""
+        with open(cls.CACHE_FILE, "wb") as file:
+            dill.dump(cache_dict, file)
 
     @classmethod
     def add_pipeline(cls, pipeline_description: PipelineDescription):
-        for resolved_description in cls._resolve_complex_descriptions(pipeline_description):
-            cls.pipelines.append(Preprocessor(resolved_description))
-            cls.newly_added.append(Preprocessor(resolved_description))
+        new_preprocessors = PreprocessorFactory.create_from_description(pipeline_description)
+        for preprocessor in new_preprocessors:
+            if preprocessor not in cls.pipelines:
+                cls.pipelines.append(preprocessor)
+                cls.newly_added.append(preprocessor)
 
     @classmethod
     def run_search(
         cls,
         np_image: np.ndarray,
-        search_strategy: str,
-        ocr_engine: Optional[OcrEngine] = None,
+        search_strategy_name: str,
+        ocr_engine: OcrEngine = None,
         cold_start=False,
     ):
-        valid_strategies = "GridSearch"
-        if search_strategy == "GridSearch":
-            strategy = GridSearch(cls, ocr_engine, cold_start)
 
+        if cold_start:
+            pipelines = cls.pipelines
         else:
-            print(f"No such strategy implemented. Valid options are: {valid_strategies}")
+            pipelines = cls.newly_added
 
-        cls.best_preprocessor = strategy.search(np_image)
+        # Add last-time winner if there is one
+        if cls.best_preprocessor:
+            pipelines += [cls.best_preprocessor]
+
+        search_strategy = SearchStrategyFactory.create_strategy(search_strategy_name)
+        cls.best_preprocessor = search_strategy.search(pipelines, np_image, ocr_engine)
+
         cls.newly_added = []
+        cls._save_to_cache()
 
     @classmethod
     def get_best_preprocessor(cls):
@@ -158,13 +250,10 @@ class PipelineManager:
 
 
 class SearchStrategy(ABC):
-    def __init__(self, pipeline_manager: Type[PipelineManager], ocr_engine=None, cold_start=False):
-        self.pipeline_manager = pipeline_manager
-        self.ocr_engine = ocr_engine
-        self.cold_start = cold_start
-
     @abstractmethod
-    def search(self, np_image: np.ndarray) -> np.ndarray:
+    def search(
+        self, pipelines: list[Preprocessor], np_image: np.ndarray, ocr_engine=None
+    ) -> Preprocessor:
         pass
 
 
@@ -174,20 +263,34 @@ class GridSearch(SearchStrategy):
     pipeline manager, and, optionally, to an OCR_engine used for bounding boxes detection
     """
 
-    def search(self, np_image: np.ndarray) -> Preprocessor:
-        competitors = (
-            self.pipeline_manager.pipelines
-            if self.cold_start
-            else self.pipeline_manager.newly_added
-        )
-        competing_images = [preprocessor.process(np_image) for preprocessor in competitors]
-
-        if self.ocr_engine:
-            competing_images = [self.ocr_engine.process(np_image) for np_image in competing_images]
+    def search(
+        self, pipelines: list[Preprocessor], np_image: np.ndarray, ocr_engine=None
+    ) -> Preprocessor:
+        competing_images = [preprocessor.process(np_image) for preprocessor in pipelines]
+        if ocr_engine:
+            competing_images = [ocr_engine.process(np_image) for np_image in competing_images]
 
         best_image_index = ImageSelector.select_best_image(competing_images)
-        assert best_image_index
-        return competitors[best_image_index]
+        assert best_image_index is not None
+        return pipelines[best_image_index]
+
+
+class SearchStrategyFactory:
+    """Factory class to create SearchStrategy objects."""
+
+    @staticmethod
+    def create_strategy(strategy_name: str, **kwargs) -> SearchStrategy:
+        """Creates a SearchStrategy object based on the given name."""
+
+        strategies = {
+            "GridSearch": GridSearch,
+            # Add other strategies here (e.g., "RandomizedGridSearch": RandomizedGridSearch)
+        }
+
+        if strategy_name not in strategies:
+            raise ValueError(f"Invalid search strategy name: {strategy_name}")
+
+        return strategies[strategy_name](**kwargs)
 
 
 class ImageSelector:
@@ -378,12 +481,12 @@ def main():
                 "maxValue": [255],
                 "adaptiveMethod": [cv2.ADAPTIVE_THRESH_MEAN_C],
                 "thresholdType": [cv2.THRESH_BINARY],
-                "blockSize": [5, 11, 13, 15],
+                "blockSize": [13, 15],
                 "C": [5],
             },
             crop_image: {"minx": [0.1], "maxx": [0.7], "miny": [0.4], "maxy": [0.95]},
             resize_image: {
-                "scale_factor": [2, 3],
+                "scale_factor": [1, 2],
             },
             cv2.dilate: {"kernel": [np.ones((3, 3), int)]},
             cv2.erode: {"kernel": [np.ones((3, 3), int)]},
@@ -397,14 +500,14 @@ def main():
                 "maxValue": [255],
                 "adaptiveMethod": [cv2.ADAPTIVE_THRESH_MEAN_C],
                 "thresholdType": [cv2.THRESH_BINARY],
-                "blockSize": [5, 11],
+                "blockSize": [31],
                 "C": [10, 20, 30, 40],
             },
             crop_image: {"minx": [0.1], "maxx": [0.7], "miny": [0.4], "maxy": [0.95]},
         }
     )
 
-    test_image = cv2.imread("./test_images/test_image1.png")
+    test_image = cv2.imread("../test_images/test_image1.png")
     pipeline_manage.add_pipeline(pipeline1)
     pipeline_manage.add_pipeline(pipeline2)
     pipeline_manage.run_search(test_image, "GridSearch")
