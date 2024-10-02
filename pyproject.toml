@@ -59,4 +59,7 @@ exclude = [
   ".eggs",
   "*.egg",
   ".venv",
-  "*.toml"]
+  "*.toml",
+  "__init__.py",
+  "setup.py",
+  "tasks.py"]

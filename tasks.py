@@ -38,7 +38,7 @@ def clean(ctx):
 
 @task
 def lint(ctx):
-    """Lint using flake8 and black (use `invoke format` to do formatting)"""
+    ctx.run("echo 'Lint using flake8 and black (use `invoke format` to do formatting)'")
     ctx.run(f"flake8 {MODULE_NAME}")
     ctx.run(f"isort --check --diff --profile black {MODULE_NAME}")
     ctx.run(f"black --check --config pyproject.toml {MODULE_NAME}")
@@ -46,7 +46,8 @@ def lint(ctx):
 
 @task
 def format(ctx):
-    """Format source code with black"""
+    ctx.run("echo 'Format source code with isort and black'")
+    ctx.run(f"isort --profile black {MODULE_NAME}")
     ctx.run(f"black --config pyproject.toml {MODULE_NAME}")
 
 
@@ -54,7 +55,10 @@ def format(ctx):
 def sync_data_down(ctx):
     """Download Data from storage system"""
     if DATASET_STORAGE:
-        if "s3" in DATASET_STORAGE:
+        if "none" in DATASET_STORAGE:
+            print("No DATASET_STORAGE found. Please ensure the dataset is available.")
+
+        elif "s3" in DATASET_STORAGE:
             bucket = DATASET_STORAGE["s3"].get("bucket", "")
             profile = DATASET_STORAGE["s3"].get("aws_profile", "default")
             profile_option = f" --profile {profile}" if profile != "default" else ""
@@ -66,12 +70,17 @@ def sync_data_down(ctx):
             bucket = DATASET_STORAGE["gcs"].get("bucket", "")
             ctx.run(f"gsutil -m rsync -r gs://{bucket}/data/ data/")
 
+    # Your code to sync data up
+    print("Syncing data up...")
 
 @task
 def sync_data_up(ctx):
     """Upload Data to storage system"""
     if DATASET_STORAGE:
-        if "s3" in DATASET_STORAGE:
+        if "none" in DATASET_STORAGE:
+            print("No DATASET_STORAGE found. Please ensure the dataset is available.")
+
+        elif "s3" in DATASET_STORAGE:
             bucket = DATASET_STORAGE["s3"].get("bucket", "")
             profile = DATASET_STORAGE["s3"].get("aws_profile", "default")
             profile_option = f" --profile {profile}" if profile != "default" else ""

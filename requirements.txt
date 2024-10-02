@@ -6,6 +6,9 @@ python-dotenv
 numpy~=1.21.4
 matplotlib~=3.5.1
 opencv-python
-pre-commit
+invoke~=2.2.0
 joblib~=1.4.2
+Flake8-pyproject~=1.2.3
+
 -e .
+
