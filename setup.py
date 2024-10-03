@@ -13,7 +13,7 @@ setup(
     author_email="kalmykovalexey01@gmail.com",
     url="https://github.com/Kalmy8/auto_preprocessing",
     packages=find_packages(exclude=["tests*"]),
-    install_requires=['numpy~=1.21.4', 'matplotlib~=3.5.1', 'opencv-python'],  # List dependencies
+    install_requires=['numpy~=1.21.4', 'matplotlib~=3.5.1', 'opencv-python', 'dill'],  # List dependencies
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
