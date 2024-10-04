@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches
 
-from utils import get_cv2_function_params, parameter_combinations
+from .utils import get_cv2_function_params, parameter_combinations
 
 
 class Preprocessor:
