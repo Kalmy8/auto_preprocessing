@@ -1,2 +1,1 @@
-from .auto_preprocessing import PipelineDescription, PipelineManager
-
+from .auto_preprocessing import PipelineDescription, PipelineManager, Preprocessor, PreprocessorFactory
