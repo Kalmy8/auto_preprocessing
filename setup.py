@@ -5,7 +5,7 @@ with open("README.md", 'r', encoding='utf-8') as f:
 
 setup(
     name="prepCV",
-    version = "0.0.1",
+    version = "0.0.4",
     description = "Define preprocessing pipelines using nested callable functions and parameter grids for them.",
     long_description=long_description,
     long_description_content_type="text/markdown",
