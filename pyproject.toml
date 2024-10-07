@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "prepCV"
-version = "0.1.0"
+version = "1.0.0"
 description = "Define preprocessing pipelines using nested callable functions and parameter grids for them."
 authors = [{ name = "Kalmy8" }]
 license = { file = "LICENSE" }
@@ -32,7 +32,8 @@ skip_glob = ["**/migrations/*", "**/settings/*"]
 src_paths = ["./prepCV"]
 
 [tool.mypy]
-mypy_path = "./prepCV"
+files = "prepCV"
+exclude = "__init__.py"
 check_untyped_defs = true
 disallow_any_generics = true
 ignore_missing_imports = true
@@ -44,7 +45,6 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_configs = true
 no_implicit_reexport = true
-exclude = ['targets\.py$']
 
 
 [tool.flake8]
@@ -63,3 +63,8 @@ exclude = [
   "__init__.py",
   "setup.py",
   "tasks.py"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.0.0"
+tag_format = "v{major}.{minor}.{patch}"
