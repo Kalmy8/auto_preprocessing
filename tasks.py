@@ -73,6 +73,7 @@ def sync_data_down(ctx):
     # Your code to sync data up
     print("Syncing data up...")
 
+
 @task
 def sync_data_up(ctx):
     """Upload Data to storage system"""

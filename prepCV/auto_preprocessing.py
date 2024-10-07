@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import product
 from types import BuiltinFunctionType, BuiltinMethodType
-from typing import Any, Callable, Optional, Collection
+from typing import Any, Callable, Optional
 
 import cv2
 import dill
@@ -24,12 +24,15 @@ class CacheManager:
         try:
             with open(cls.CACHE_FILE, "rb") as f:
                 cache_dict = dill.load(f)
+                preprocessors: list[Preprocessor] = cache_dict["preprocessors"]
 
-            return cache_dict['preprocessors']
+            return preprocessors
 
         except FileNotFoundError:
-            print(f"Loading Preprocessors from cachefile {cls.CACHE_FILE} has failed.",
-                  "Check for file existence and integrity")
+            print(
+                f"Loading Preprocessors from cachefile {cls.CACHE_FILE} has failed.",
+                "Check for file existence and integrity",
+            )
             return None
 
     @classmethod
@@ -37,18 +40,28 @@ class CacheManager:
         try:
             with open(cls.CACHE_FILE, "rb") as f:
                 cache_dict = dill.load(f)
-
-                return cache_dict["best_preprocessor"]
+                best_preprocessor: Preprocessor = cache_dict["best_preprocessor"]
+                return best_preprocessor
 
         except FileNotFoundError:
-            print(f"Loading Preprocessors from cachefile {cls.CACHE_FILE} has failed.",
-                  "Check for file existence and integrity")
+            print(
+                f"Loading Preprocessors from cachefile {cls.CACHE_FILE} has failed.",
+                "Check for file existence and integrity",
+            )
             return None
 
     @classmethod
-    def save_preprocessors_to_cache(cls, preprocessors: Collection[Preprocessor], best_preprocessor: Preprocessor):
-        cache_dict = {"preprocessors": preprocessors,
-                      "best_preprocessor": best_preprocessor}
+    def save_preprocessors_to_cache(
+        cls, preprocessors: list[Preprocessor], best_preprocessor: Optional[Preprocessor]
+    ):
+        if not all([preprocessors, best_preprocessor]):
+            print(
+                "You have passed NoneType object within listed preprocessors or best preprocessor",
+                "Can not dump NoneType objects, please make sure that your data is valid",
+                sep="\n",
+            )
+
+        cache_dict = {"preprocessors": preprocessors, "best_preprocessor": best_preprocessor}
 
         """Save the PipelineManager to the cache."""
         with open(cls.CACHE_FILE, "wb") as file:
@@ -144,7 +157,7 @@ class PipelineDescription:
         """Custom hash function for PipelineDescription."""
         return hash(self._get_hashable_representation())
 
-    def _get_hashable_representation(self) -> tuple:
+    def _get_hashable_representation(self) -> tuple[tuple[str, str], ...]:
         """Returns a hashable tuple representation of the description."""
         hashable_description = []
         for func, params in self.description.items():
@@ -153,7 +166,7 @@ class PipelineDescription:
                 func_representation = func.__qualname__
             else:
                 # Use co_code directly for comparison
-                func_representation = func.__code__.co_code
+                func_representation = str(func.__code__.co_code)
 
             params_representations = str(params)
             hashable_description.append((func_representation, params_representations))
@@ -201,6 +214,7 @@ class PipelineManager:
     launches competition between them using parameter GridSearch,
     caches the competition results and constructs working preprocessors from their descriptions.
     """
+
     caching = False
     pipelines: list[Preprocessor] = []
     best_preprocessor: Optional[Preprocessor] = None
@@ -224,8 +238,11 @@ class PipelineManager:
     def save_to_cache(cls):
         preprocessors_to_save = cls.pipelines
         if cls.newly_added:
-            print('Some of the pipelines were just added and no search has been runned yet.',
-                  'Thus, Pipeline Manager cached only previously seen preprocessors.', sep = '\n')
+            print(
+                "Some of the pipelines were just added and no search has been runned yet.",
+                "Thus, Pipeline Manager cached only previously seen preprocessors.",
+                sep="\n",
+            )
 
             preprocessors_to_save = list(set(cls.pipelines) - set(cls.newly_added))
         else:
@@ -241,11 +258,11 @@ class PipelineManager:
 
     @classmethod
     def run_search(
-            cls,
-            np_image: np.ndarray,
-            search_strategy_name: str,
-            ocr_engine: OcrEngine = None,
-            cold_start=False,
+        cls,
+        np_image: np.ndarray,
+        search_strategy_name: str,
+        ocr_engine: Optional[OcrEngine] = None,
+        cold_start=False,
     ):
 
         if cold_start:
@@ -273,7 +290,7 @@ class PipelineManager:
 class SearchStrategy(ABC):
     @abstractmethod
     def search(
-            self, pipelines: list[Preprocessor], np_image: np.ndarray, ocr_engine=None
+        self, pipelines: list[Preprocessor], np_image: np.ndarray, ocr_engine=None
     ) -> Preprocessor:
         pass
 
@@ -285,7 +302,7 @@ class GridSearch(SearchStrategy):
     """
 
     def search(
-            self, pipelines: list[Preprocessor], np_image: np.ndarray, ocr_engine=None
+        self, pipelines: list[Preprocessor], np_image: np.ndarray, ocr_engine=None
     ) -> Preprocessor:
         competing_images = [preprocessor.process(np_image) for preprocessor in pipelines]
         if ocr_engine:
@@ -377,10 +394,10 @@ class ImageSelector:
         # Get next batch of indexes
         if cls._best_image_index is not None:
             batch_indexes = [cls._best_image_index] + cls._image_indexes[: cls._batch_size - 1]
-            cls._image_indexes = cls._image_indexes[cls._batch_size - 1:]
+            cls._image_indexes = cls._image_indexes[cls._batch_size - 1 :]
         else:
             batch_indexes = cls._image_indexes[: cls._batch_size]
-            cls._image_indexes = cls._image_indexes[cls._batch_size:]
+            cls._image_indexes = cls._image_indexes[cls._batch_size :]
 
         # Check if figures are initialized correctly
         assert cls._fig is not None
@@ -426,7 +443,7 @@ class ImageSelector:
             selected_index = int(event.key) - 1
 
             assert (
-                    cls._current_batch_indexes is not None
+                cls._current_batch_indexes is not None
             ), "current_batch_indexes attribute is not initialized"
             cls._best_image_index = cls._current_batch_indexes[selected_index]
             plt.close()  # Close the plot after selection
@@ -535,6 +552,7 @@ def main():
     pipeline_manage.run_search(test_image, "GridSearch")
     pipeline_manage.save_to_cache()
     print(pipeline_manage.best_preprocessor)
+
 
 if __name__ == "__main__":
     main()
