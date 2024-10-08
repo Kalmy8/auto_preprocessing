@@ -204,7 +204,7 @@ class OcrEngine(ABC):
     """
 
     @abstractmethod
-    def process(self, np_image: np.ndarray) -> np.ndarray:
+    def draw_bounding_boxes(self, np_image: np.ndarray) -> np.ndarray:
         pass
 
 

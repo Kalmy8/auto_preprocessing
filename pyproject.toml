@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "prepCV"
-version = "1.0.0"
+version = "v1.0.0"
 description = "Define preprocessing pipelines using nested callable functions and parameter grids for them."
 authors = [{ name = "Kalmy8" }]
 license = { file = "LICENSE" }
@@ -64,7 +64,3 @@ exclude = [
   "setup.py",
   "tasks.py"]
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "1.0.0"
-tag_format = "v{major}.{minor}.{patch}"
