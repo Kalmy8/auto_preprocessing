@@ -1,1 +1,7 @@
-from .auto_preprocessing import PipelineDescription, PipelineManager, Preprocessor, PreprocessorFactory
+from .auto_preprocessing import (
+    CacheManager,
+    PipelineDescription,
+    PipelineManager,
+    Preprocessor,
+    PreprocessorFactory,
+)

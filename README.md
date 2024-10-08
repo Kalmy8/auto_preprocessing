@@ -31,18 +31,12 @@ Alternatively:
    pip install prepCV
    ```
    
-2. **Import dependencies:**
-
-   ```python
-   from prepCV import PipelineDescription, PipelineManager
-   # This classes usage cases are provided below
-   ```
 ## Usage
 1. **Define Pipelines:** Create `PipelineDescription` objects to define your preprocessing pipelines.
 
    ```python
    import cv2
-   from .auto_preprocessing.prepCV import PipelineDescription, PipelineManager
+   from prepCV import PipelineDescription, PipelineManager
 
    pipeline1 = PipelineDescription({
        cv2.cvtColor: {'code': [cv2.COLOR_BGR2GRAY]},
@@ -80,7 +74,33 @@ Alternatively:
    best_preprocessor = pipeline_manage.get_best_preprocessor()
    ```
 
-4. **Use the Preprocessor:**
+3. **Save Search Results to cache:**
+
+```python
+   from prepCV import CacheManager
+   
+   # Restore previous search result 
+   pipeline_manage = PipelineManager()
+   pipeline_manage.load_from_cache()
+
+   # Degine some new pipeline
+      pipeline3 = PipelineDescription({
+       # ... define another pipeline ...
+   })
+   
+   # Add pipelines to PipelineManager
+   pipeline_manage.add_pipeline(pipeline1)
+   pipeline_manage.add_pipeline(pipeline2)
+   pipeline_manage.add_pipeline(pipeline3)
+   
+   # This search will only compare new pipeline3 to previous best seen pipeline
+   pipeline_manage.run_search(image, 'GridSearch') 
+
+   # Save results to cache
+   pipeline_manage.save_to_cache()
+```
+   
+5. **Use the Preprocessor:**
 
    ```python
    processed_image = best_preprocessor.process(new_image)
