@@ -1,0 +1,32 @@
+name: Auto-Bump and Tag
+
+on:
+  pull_request:
+    types: [closed]  # Only run this action when a PR is closed
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    if: github.event.pull_request.merged == true  # Run only if the PR was merged
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Install Commitizen
+        run: |
+          python -m pip install --upgrade pip
+          pip install commitizen
+
+      - name: Bump Version and Create Tag
+        run: |
+          cz bump --yes  # Automatically bumps the version
+          git push --follow-tags origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required to push tags
