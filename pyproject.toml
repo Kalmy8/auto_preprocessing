@@ -64,3 +64,8 @@ exclude = [
   "setup.py",
   "tasks.py"]
 
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_type = "semver"
+version_provider = "pep621"

@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import product
+from pathlib import Path
 from types import BuiltinFunctionType, BuiltinMethodType
 from typing import Any, Callable, Optional
 
@@ -17,12 +18,11 @@ from prepCV.utils import get_cv2_function_params, parameter_combinations
 
 
 class CacheManager:
-    CACHE_FILE = "_prepCV_cache.pkl"
 
-    @classmethod
-    def load_preprocessors_from_cache(cls) -> Optional[list[Preprocessor]]:
+    @staticmethod
+    def load_preprocessors_from_cache(cache_filepath: str | Path) -> Optional[list[Preprocessor]]:
         try:
-            with open(cls.CACHE_FILE, "rb") as f:
+            with open(cache_filepath, "rb") as f:
                 cache_dict = dill.load(f)
                 preprocessors: list[Preprocessor] = cache_dict["preprocessors"]
 
@@ -30,29 +30,31 @@ class CacheManager:
 
         except FileNotFoundError:
             print(
-                f"Loading Preprocessors from cachefile {cls.CACHE_FILE} has failed.",
+                f"Loading Preprocessors from cachefile {cache_filepath} has failed.",
                 "Check for file existence and integrity",
             )
             return None
 
-    @classmethod
-    def load_best_preprocessor_from_cache(cls) -> Optional[Preprocessor]:
+    @staticmethod
+    def load_best_preprocessor_from_cache(cache_filepath: str | Path) -> Optional[Preprocessor]:
         try:
-            with open(cls.CACHE_FILE, "rb") as f:
+            with open(cache_filepath, "rb") as f:
                 cache_dict = dill.load(f)
                 best_preprocessor: Preprocessor = cache_dict["best_preprocessor"]
                 return best_preprocessor
 
         except FileNotFoundError:
             print(
-                f"Loading Preprocessors from cachefile {cls.CACHE_FILE} has failed.",
+                f"Loading Preprocessors from cachefile {cache_filepath} has failed.",
                 "Check for file existence and integrity",
             )
             return None
 
-    @classmethod
+    @staticmethod
     def save_preprocessors_to_cache(
-        cls, preprocessors: list[Preprocessor], best_preprocessor: Optional[Preprocessor]
+        cache_filepath: str | Path,
+        preprocessors: list[Preprocessor],
+        best_preprocessor: Optional[Preprocessor],
     ):
         if not all([preprocessors, best_preprocessor]):
             print(
@@ -64,7 +66,7 @@ class CacheManager:
         cache_dict = {"preprocessors": preprocessors, "best_preprocessor": best_preprocessor}
 
         """Save the PipelineManager to the cache."""
-        with open(cls.CACHE_FILE, "wb") as file:
+        with open(cache_filepath, "wb") as file:
             dill.dump(cache_dict, file)
 
 
@@ -221,21 +223,21 @@ class PipelineManager:
     newly_added: list[Preprocessor] = []
 
     @classmethod
-    def load_from_cache(cls):
+    def load_from_cache(cls, cache_filepath: str | Path):
         """Load the PipelineManager from the cache."""
 
-        cached_preprocessors = CacheManager.load_preprocessors_from_cache()
+        cached_preprocessors = CacheManager.load_preprocessors_from_cache(cache_filepath)
         if cached_preprocessors:
             cls.pipelines = cached_preprocessors
             print("Loaded seen preprocessors from cache.")
 
-        best_preprocessor = CacheManager.load_best_preprocessor_from_cache()
+        best_preprocessor = CacheManager.load_best_preprocessor_from_cache(cache_filepath)
         if best_preprocessor:
             cls.best_preprocessor = best_preprocessor
             print("Loaded best preprocessor from cache.")
 
     @classmethod
-    def save_to_cache(cls):
+    def save_to_cache(cls, cache_filepath: str | Path):
         preprocessors_to_save = cls.pipelines
         if cls.newly_added:
             print(
@@ -245,8 +247,10 @@ class PipelineManager:
             )
 
             preprocessors_to_save = list(set(cls.pipelines) - set(cls.newly_added))
-        else:
-            CacheManager.save_preprocessors_to_cache(preprocessors_to_save, cls.best_preprocessor)
+
+        CacheManager.save_preprocessors_to_cache(
+            cache_filepath, preprocessors_to_save, cls.best_preprocessor
+        )
 
     @classmethod
     def add_pipeline(cls, pipeline_description: PipelineDescription):
