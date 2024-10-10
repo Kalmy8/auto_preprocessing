@@ -1,18 +1,32 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
+requires = ["flit_core >=3.2,<4", "commitizen"]
 build-backend = "flit_core.buildapi"
 
 [project]
 name = "prepCV"
-version = "1.1.0"
 description = "Define preprocessing pipelines using nested callable functions and parameter grids for them."
-authors = [{ name = "Kalmy8" }]
-license = { file = "LICENSE" }
 readme = "README.md"
+version = "1.1.0"
+authors = [{ name = "Kalmy8", email = "kalmykovalexey01@gmail.com" }]
+license = { file = "LICENSE" }
+dependencies = [
+    "numpy~=1.21.4",
+    "matplotlib~=3.5.1",
+    "opencv-python",
+    "dill",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License"]
-requires-python = "~=3.9"
+    "License :: OSI Approved :: MIT License"
+]
+requires-python = ">=3.9"
+homepage = "https://github.com/Kalmy8/auto_preprocessing"
+
+# This replaces setup.py's long_description and content type
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/Kalmy8/auto_preprocessing"
 
 [tool.black]
 line-length = 99
@@ -46,7 +60,6 @@ warn_unreachable = true
 warn_unused_configs = true
 no_implicit_reexport = true
 
-
 [tool.flake8]
 max-line-length = 94
 extend-ignore = ["E501", "E203", "W503"]
@@ -62,7 +75,8 @@ exclude = [
   "*.toml",
   "__init__.py",
   "setup.py",
-  "tasks.py"]
+  "tasks.py"
+]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
