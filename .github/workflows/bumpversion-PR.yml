@@ -24,6 +24,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install commitizen
 
+      - name: Configure Git
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Bump Version and Create Tag
         run: |
           cz bump --yes  # Automatically bumps the version
