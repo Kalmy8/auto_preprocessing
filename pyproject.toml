@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "prepCV"
-version = "1.1.0"
+version = "2.0.0"
 description = "Define preprocessing pipelines using nested callable functions and parameter grids for them."
 readme = "README.md"
 authors = [{ name = "Kalmy8", email = "kalmykovalexey01@gmail.com" }]

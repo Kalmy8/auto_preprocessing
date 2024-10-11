@@ -2,8 +2,10 @@ name: 'Validate PR title'
 
 on:
   pull_request:
-    branches:
-      - "main"
+    branches: [main]
+    types:
+      - synchronize
+      - opened
 jobs:
   validate:
     runs-on: ubuntu-latest

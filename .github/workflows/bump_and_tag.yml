@@ -1,0 +1,67 @@
+name: Bump Version and Create a Tag
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  bump_version:
+    if: github.event.pull_request.merged == true && "!startsWith(github.event.head_commit.message, 'bump:')"
+    runs-on: ubuntu-latest
+    name: Bump version and create changelog with commitizen
+    permissions:
+      contents: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: cz
+        name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
+
+  create_tag:
+    runs-on: ubuntu-latest
+    name: Create and push tag
+    needs: bump_version
+    permissions:
+      contents: write # Required to push tags
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Extract version from pyproject.toml
+        id: extract_version
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const toml = require('toml'); 
+            const pyproject = toml.parse(fs.readFileSync('./pyproject.toml', 'utf-8'));
+            return pyproject.project.version; 
+
+      - name: Create and push tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = steps.extract_version.outputs.result;
+            const tag = `v${version}`;
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tag}`,
+              sha: context.sha, 
+            });
