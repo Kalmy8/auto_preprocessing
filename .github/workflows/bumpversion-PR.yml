@@ -27,6 +27,7 @@ jobs:
 
       - name: Tag release
         run: |
+          pip install toml      
           VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
           git tag v${VERSION}
           git push origin --tags
