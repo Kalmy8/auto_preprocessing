@@ -27,3 +27,32 @@ jobs:
           pip install toml
           git push origin --tags
 
+      - name: Install Python and dependencies
+        run: |
+          pip install toml
+
+      - name: Update pyproject.toml with new version
+        run: |
+          # Load the toml file
+          with open('pyproject.toml', 'r') as f:
+              config = toml.load(f)
+          
+          # Update the version field
+          config['project']['version'] = {{ steps.cz.outputs.version }}
+          
+          # Write back to the toml file
+          with open('pyproject.toml', 'w') as f:
+              toml.dump(config, f)
+
+      - name: Commit the version update
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
+
+      - name: Push changes and tags to remote
+        run: |
+          git push origin --tags
+          git push origin main
+
