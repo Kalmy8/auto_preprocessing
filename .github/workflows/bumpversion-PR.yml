@@ -22,9 +22,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push version tag to git
+      - name: Push new tags to remote
         run: |
-          pip install toml      
-          git tag v${{ steps.cz.outputs.version }}
-          git push origin v${{ steps.cz.outputs.version }}
+          pip install toml
+          git push origin --tags
 
