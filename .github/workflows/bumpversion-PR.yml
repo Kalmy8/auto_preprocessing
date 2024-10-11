@@ -25,9 +25,3 @@ jobs:
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
 
-      - name: Tag release
-        run: |
-          pip install toml      
-          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
-          git tag v${VERSION}
-          git push origin v${VERSION}
