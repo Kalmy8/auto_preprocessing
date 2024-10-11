@@ -30,4 +30,4 @@ jobs:
           pip install toml      
           VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
           git tag v${VERSION}
-          git push origin --tags
+          git push origin v${VERSION}
