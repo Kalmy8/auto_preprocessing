@@ -13,7 +13,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches
-
 from prepCV.utils import get_cv2_function_params, parameter_combinations
 
 
