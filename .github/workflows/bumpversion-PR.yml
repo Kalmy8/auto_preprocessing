@@ -33,17 +33,21 @@ jobs:
 
       - name: Update pyproject.toml with new version
         run: |
-          # Load the toml file
-          with open('pyproject.toml', 'r') as f:
-              config = toml.load(f)
-          
-          # Update the version field
-          config['project']['version'] = {{ steps.cz.outputs.version }}
-          
-          # Write back to the toml file
-          with open('pyproject.toml', 'w') as f:
-              toml.dump(config, f)
+          VERSION=${{ steps.cz.outputs.version }}
+          python -c "
+import toml
 
+# Load the toml file
+with open('pyproject.toml', 'r') as f:
+    config = toml.load(f)
+
+# Update the version field
+config['project']['version'] = '$VERSION'
+
+# Write back to the toml file
+with open('pyproject.toml', 'w') as f:
+    toml.dump(config, f)
+          "
       - name: Commit the version update
         run: |
           git config --local user.name "github-actions[bot]"
