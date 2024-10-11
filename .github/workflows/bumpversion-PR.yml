@@ -25,6 +25,6 @@ jobs:
       - name: Push version tag to git
         run: |
           pip install toml      
-          git tag v${{ steps.cz.outputs.version }}"
-          git push origin v${{ steps.cz.outputs.version }}"
+          git tag v${{ steps.cz.outputs.version }}
+          git push origin v${{ steps.cz.outputs.version }}
 
