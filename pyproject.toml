@@ -4,33 +4,24 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "prepCV"
+version = "1.1.0"
 description = "Define preprocessing pipelines using nested callable functions and parameter grids for them."
 readme = "README.md"
 authors = [{ name = "Kalmy8", email = "kalmykovalexey01@gmail.com" }]
 license = { file = "LICENSE" }
 dependencies = [
-    "numpy~=1.21.4",
-    "matplotlib~=3.5.1",
+    "numpy>=2.0.2",
+    "matplotlib>=3.9.2",
     "opencv-python",
     "dill"]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License"]
 requires-python = ">=3.9"
-homepage = "https://github.com/Kalmy8/auto_preprocessing"
-
-# This replaces setup.py's long_description and content type
-
-[project.dynamic]
-version = "1.2.0"
-requires = ["numpy~=1.21.4",
-    "matplotlib~=3.5.1",
-    "opencv-python",
-    "dill"]
-homepage = "https://your.homepage.url"
 
 [project.urls]
-"Homepage" = "https://github.com/Kalmy8/auto_preprocessing"
+homepage = "https://github.com/Kalmy8/auto_preprocessing"
 
 [tool.black]
 line-length = 99
