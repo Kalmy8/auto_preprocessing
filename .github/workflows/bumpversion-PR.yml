@@ -32,8 +32,7 @@ jobs:
         run: pip install toml
 
       - name: Install yq
-        run: |
-          sudo apt-get install -y yq
+        run: pip install yq
 
       - name: Update pyproject.toml with new version
         run: |
