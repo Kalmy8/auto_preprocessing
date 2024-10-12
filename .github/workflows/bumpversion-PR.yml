@@ -36,8 +36,8 @@ jobs:
 
       - name: Update pyproject.toml with new version
         run: |
-          version=${{ steps.cz.outputs.version }}
-          yq eval ".project.version = \"$version\"" -i pyproject.toml
+              version=${{ steps.cz.outputs.version }}
+              yq eval --inplace ".project.version = \"$version\"" pyproject.toml
 
       - name: Commit the version update
         run: |
