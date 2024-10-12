@@ -37,7 +37,8 @@ jobs:
       - name: Update pyproject.toml with new version
         run: |
               version=${{ steps.cz.outputs.version }}
-              sed -i "s/version = .*/version = \"$version\"/" pyproject.toml
+              sed -i "s/^version = \".*\"/version = \"$version\"/" pyproject.toml
+
 
       - name: Commit the version update
         run: |
@@ -45,4 +46,4 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml
           git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
-          git push origin HEAD:main  # Push directly to main
+          git push origin HEAD --force
