@@ -16,47 +16,34 @@ jobs:
         with:
           fetch-depth: 0
           token: "${{ secrets.GITHUB_TOKEN }}"
+
       - id: cz
         name: Create bump and changelog
         uses: commitizen-tools/commitizen-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push new tags to remote
-        run: |
-          pip install toml
-          git push origin --tags
+      - name: Set up Python
+        uses: actions/setup-python@v2  # Use setup-python action
+        with:
+          python-version: '3.x'       # Specify your Python version
 
-      - name: Install Python and dependencies
+      - name: Install dependencies
+        run: pip install toml
+
+      - name: Install yq
         run: |
-          pip install toml
+          sudo apt-get install -y yq
 
       - name: Update pyproject.toml with new version
         run: |
-          VERSION=${{ steps.cz.outputs.version }}
-          python -c "
-import toml
+          version=${{ steps.cz.outputs.version }}
+          yq eval ".project.version = \"$version\"" -i pyproject.toml
 
-# Load the toml file
-with open('pyproject.toml', 'r') as f:
-    config = toml.load(f)
-
-# Update the version field
-config['project']['version'] = '$VERSION'
-
-# Write back to the toml file
-with open('pyproject.toml', 'w') as f:
-    toml.dump(config, f)
-          "
       - name: Commit the version update
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml
           git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
-
-      - name: Push changes and tags to remote
-        run: |
-          git push origin --tags
-          git push origin main
-
+          git push origin HEAD:main  # Push directly to main
