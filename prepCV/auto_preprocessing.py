@@ -13,7 +13,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches
-
 from prepCV.utils import get_cv2_function_params, parameter_combinations
 
 
@@ -514,7 +513,7 @@ def main():
         return cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
 
     pipeline_manage = PipelineManager()
-    pipeline_manage.load_from_cache()
+    pipeline_manage.load_from_cache('./_prepCV_cache.pkl')
 
     # Example Usage
     pipeline1 = PipelineDescription(
@@ -554,7 +553,7 @@ def main():
     pipeline_manage.add_pipeline(pipeline1)
     pipeline_manage.add_pipeline(pipeline2)
     pipeline_manage.run_search(test_image, "GridSearch")
-    pipeline_manage.save_to_cache()
+    pipeline_manage.save_to_cache('./_prepCV_cache.pkl')
     print(pipeline_manage.best_preprocessor)
 
 

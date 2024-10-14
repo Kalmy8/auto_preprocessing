@@ -3,8 +3,8 @@ flake8
 isort
 pip
 python-dotenv
-numpy~=1.21.4
-matplotlib~=3.5.1
+numpy>=2.0.2
+matplotlib>=3.9.2
 opencv-python
 invoke~=2.2.0
 joblib~=1.4.2

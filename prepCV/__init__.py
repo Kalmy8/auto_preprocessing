@@ -1,4 +1,4 @@
-from .auto_preprocessing import (
+from prepCV.auto_preprocessing import (
     CacheManager,
     OcrEngine,
     PipelineDescription,
