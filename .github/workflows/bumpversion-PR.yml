@@ -55,16 +55,16 @@ jobs:
           ls -la .git/
           ls -la .git/objects/
 
-      - name: List modified files
-        run: git status
-
       - name: Commit the version update
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          sudo chmod -R u+rwX pyproject.toml
-          sudo git commit -m "bump: update version to v${{ steps.cz.outputs.version }}" -a
+          sudo git add pyproject.toml
 
+      - name: List modified files
+        run: git status
+
+      #sudo git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
