@@ -40,6 +40,13 @@ jobs:
       - name: Install yq
         run: pip install yq
 
+      - name: Add the pyproject file to track
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          chmod -R u+rwX pyproject.toml
+          git add pyproject.toml
+
       - name: Verify pyproject.toml before update
         run: cat pyproject.toml
 
@@ -58,16 +65,11 @@ jobs:
           ls -la .git/
           ls -la .git/objects/
 
-      - name: Commit the version update
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          chmod -R u+rwX pyproject.toml
-          git add pyproject.toml
 
       - name: List modified files
         run: git status
 
-      # sudo git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
       - name: Push changes
-        run:
+        run: |
+          git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
+          git push 
