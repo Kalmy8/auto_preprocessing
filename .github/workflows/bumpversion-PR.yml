@@ -47,6 +47,7 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          sudo chmod -R u+rwX .git/
           git commit -m "bump: update version to v${{ steps.cz.outputs.version }}" -a
 
       - name: Push changes
