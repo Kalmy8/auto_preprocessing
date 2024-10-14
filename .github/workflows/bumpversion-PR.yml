@@ -45,6 +45,9 @@ jobs:
               version=${{ steps.cz.outputs.version }}
               sed -i "s/^version = \".*\"/version = \"$version\"/" pyproject.toml
 
+      - name: Verify pyproject.toml version update
+        run: cat pyproject.toml
+
       - name: Check file permissions and ownership
         run: |
           echo "Current user: $(whoami)"
@@ -52,11 +55,14 @@ jobs:
           ls -la .git/
           ls -la .git/objects/
 
+      - name: List modified files
+        run: git status
+
       - name: Commit the version update
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          sudo chmod -R u+rwX .git/
+          sudo chmod -R u+rwX pyproject.toml
           sudo git commit -m "bump: update version to v${{ steps.cz.outputs.version }}" -a
 
       - name: Push changes
