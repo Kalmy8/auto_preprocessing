@@ -1,0 +1,54 @@
+name: Bump Version and Create a Tag
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  bump_version:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    runs-on: ubuntu-latest
+    name: Bump version and create changelog with commitizen
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.cz.outputs.version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: cz
+        name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          merge: true
+          branch: main
+
+  create_tag:
+    runs-on: ubuntu-latest
+    name: Create and push tag
+    needs: bump_version
+    permissions:
+      contents: write # Required to push tags
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Create and push tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = '${{ needs.bump_version.outputs.version }}';
+            const tag = `v${version}`;
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tag}`,
+              sha: context.sha, 
+            });
