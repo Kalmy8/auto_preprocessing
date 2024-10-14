@@ -40,11 +40,23 @@ jobs:
       - name: Install yq
         run: pip install yq
 
+      - name: Reset permissions for the .git directory
+        run: sudo chmod -R u+rwX .git/
+
+      - name: Check file permissions and ownership
+        run: |
+          echo "Current user: $(whoami)"
+          ls -la
+          ls -la .git/
+          ls -la .git/objects/
+
       - name: Add the pyproject file to track
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           chmod -R u+rwX pyproject.toml
+          
+  
           git add pyproject.toml
 
       - name: Verify pyproject.toml before update
@@ -57,14 +69,6 @@ jobs:
 
       - name: Verify pyproject.toml version update
         run: cat pyproject.toml
-
-      - name: Check file permissions and ownership
-        run: |
-          echo "Current user: $(whoami)"
-          ls -la
-          ls -la .git/
-          ls -la .git/objects/
-
 
       - name: List modified files
         run: git status
