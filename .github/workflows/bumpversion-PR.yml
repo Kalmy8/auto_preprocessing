@@ -26,6 +26,8 @@ jobs:
         uses: commitizen-tools/commitizen-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
 
       - name: Set up Python
         uses: actions/setup-python@v2  # Use setup-python action
