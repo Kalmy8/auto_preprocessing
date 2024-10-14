@@ -50,15 +50,6 @@ jobs:
           ls -la .git/
           ls -la .git/objects/
 
-      - name: Add the pyproject file to track
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          chmod -R u+rwX pyproject.toml
-          
-  
-          git add pyproject.toml
-
       - name: Verify pyproject.toml before update
         run: cat pyproject.toml
 
