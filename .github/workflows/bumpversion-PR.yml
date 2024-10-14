@@ -40,6 +40,9 @@ jobs:
               version=${{ steps.cz.outputs.version }}
               sed -i "s/^version = \".*\"/version = \"$version\"/" pyproject.toml
 
+      - name: Adjust permissions
+        run: sudo chmod -R u+rwX .git/
+
       - name: Commit the version update
         run: |
           git config --local user.name "github-actions[bot]"
