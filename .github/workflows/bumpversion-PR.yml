@@ -32,5 +32,4 @@ jobs:
 
       - name: Push changes
         run: |
-          git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
           git push ${{ github.head_ref }}
