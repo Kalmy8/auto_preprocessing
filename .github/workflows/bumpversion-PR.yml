@@ -40,6 +40,9 @@ jobs:
       - name: Install yq
         run: pip install yq
 
+      - name: Verify pyproject.toml before update
+        run: cat pyproject.toml
+
       - name: Update pyproject.toml with new version
         run: |
               version=${{ steps.cz.outputs.version }}
@@ -59,14 +62,12 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          sudo git add pyproject.toml
+          chmod -R u+rwX pyproject.toml
+          git add pyproject.toml
 
       - name: List modified files
         run: git status
 
-      #sudo git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
+      # sudo git commit -m "bump: update version to v${{ steps.cz.outputs.version }}"
       - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ github.head_ref }}
+        run:
