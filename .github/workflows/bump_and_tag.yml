@@ -7,11 +7,13 @@ on:
 
 jobs:
   bump_version:
-    if: github.event.pull_request.merged == true && "!startsWith(github.event.head_commit.message, 'bump:')"
+    if: github.event.pull_request.merged == true && !startsWith(github.event.head_commit.message, 'bump:')
     runs-on: ubuntu-latest
     name: Bump version and create changelog with commitizen
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.cz.outputs.version }}
     steps:
       - name: Check out
         uses: actions/checkout@v3
@@ -43,21 +45,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Extract version from pyproject.toml
-        id: extract_version
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const toml = require('toml'); 
-            const pyproject = toml.parse(fs.readFileSync('./pyproject.toml', 'utf-8'));
-            return pyproject.project.version; 
-
       - name: Create and push tag
         uses: actions/github-script@v6
         with:
           script: |
-            const version = steps.extract_version.outputs.result;
+            const version = '${{ needs.bump_version.outputs.version }}';
             const tag = `v${version}`;
             github.rest.git.createRef({
               owner: context.repo.owner,
