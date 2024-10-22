@@ -69,3 +69,5 @@ def parameter_combinations(
     values = param_grid.values()
     for instance in product(*values):
         yield dict(zip(keys, instance))
+
+print('Сделал дурь')
